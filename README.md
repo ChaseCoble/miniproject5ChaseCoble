@@ -172,7 +172,57 @@ Design decisions, and who made each one, are recorded in `DECISIONS.md`.
 
 ## AI Usage
 
-TODO: write this section yourself before submitting.
+I used two AI tools, in two different roles, and I kept them separate on purpose.
+
+**Claude (chat) as design reviewer and test teacher.** I used it to choose the
+design (KEV plus NVD, the schema, the caching rules) and to learn test-driven
+development, working a batch of tests at a time. It drafted the test code, and I
+made the decisions that decided what the tests required. Examples: strict
+parsing that skips and logs a bad entry, a public dashboard with a gated
+watchlist, stripping a trailing period from reference URLs, and which behaviors
+to leave unpinned. Reading the failing output with it taught me how pytest
+fixtures differ from mocks, how to write parametrized tests, how to confirm a
+test fails for the right reason before any code exists, and what a "vacuous
+pass" is. I typed the test files in, ran them, predicted the pass/fail counts,
+and checked every claim about the feeds against saved real responses.
+
+**Claude Code as implementer, under a rule file.** It wrote the application code
+only after the tests existed. `CLAUDE.md` told it not to edit `tests/`, to write
+only what the tests required, to report every guess the tests did not pin down,
+and not to run git commands. I committed everything myself. This was an
+instruction, not a technical control: I did not run an automated check that it
+left the tests alone. The only code change required was a styling issue with the modal. All data driven script was read line by line and approved, with styling only skimmed.
+
+### What I did myself
+- Decided the policies listed above and rejected several of Claude's proposals.
+- Wrote `tools/mutate.py`'s use into my process: I ran the mutation tester, and
+  it found four gaps that passing tests had hidden. Each got a new test.
+- Saved real KEV and NVD responses as fixtures and checked parsers against all
+  1,745 real KEV entries, which changed the notes-URL rules.
+- Ran the live fetchers once against the real services, then ran the app and
+  tested it in a browser, which found a modal text-wrapping bug the tests could not see.
+- Wrote this README, `DECISIONS.md`, and the commit history
+
+### Where the AI was wrong, and what caught it
+- Claude (chat) proposed caching `Analyzed` NVD records indefinitely. The real
+  data showed Log4Shell was modified years after analysis, so I changed it.
+- Claude predicted a day-old CVE would have no CVSS scores. It already had them.
+- Claude proposed splitting reference URLs on commas followed by whitespace. Real
+  entries use bare commas as separators and also contain commas inside URLs.
+- Claude's first diagnosis of a failed browser login (a form field mismatch) was
+  wrong. Checking the template and the database ruled it out.
+- Claude Code left the secret key at the tutorial value and dropped the watchlist
+  `note` column, because no test pinned either. I added the tests.
+- Claude (chat) miscounted tests several times. Running the suite checked it.
+
+### Limits of what I can claim
+The tests pin behavior against fakes. I verified the live fetch path and the
+browser flow by hand, but I did not security-test the app. Known gaps are listed
+under Known limitations. The test suite has [N] tests (run `pytest -q` for the
+current count), and `sources.py` scored 108 of 115 on the mutation run, with the
+survivors all in log-message wording.
+
+I asked Claude to draft this section from my notes, and I edited it.
 
 ## Authors
 
