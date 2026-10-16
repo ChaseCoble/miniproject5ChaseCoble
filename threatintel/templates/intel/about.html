@@ -1,11 +1,28 @@
 {% extends "base.html" %}
 {% block title %}About{% endblock %}
 {% block content %}
-  <h1 class="h3 mb-3">About</h1>
-  <p>Threat Intel aggregates two public, keyless sources, joined on CVE ID:</p>
-  <ul>
-    <li><a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog" rel="noopener noreferrer">CISA Known Exploited Vulnerabilities (KEV)</a>: which vulnerabilities are being exploited in the wild. Loaded in bulk when a logged-in user refreshes, at most once an hour.</li>
-    <li><a href="https://nvd.nist.gov/" rel="noopener noreferrer">NIST National Vulnerability Database (NVD)</a>: CVSS scores, fetched the first time a CVE's page is viewed and cached.</li>
-  </ul>
-  <p>Logged-in users can keep a private watchlist with a note for each CVE.</p>
+  <div class="col-lg-8">
+    <h1 class="h3 mb-3">About</h1>
+    <p class="lead">Threat Intel combines two public, keyless vulnerability sources, joined on CVE ID.</p>
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h2 class="h5"><a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog" rel="noopener noreferrer">CISA KEV</a></h2>
+            <p class="mb-0">Which vulnerabilities are being exploited in the wild. Loaded in bulk when a logged-in user refreshes, at most once an hour for the whole app.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h2 class="h5"><a href="https://nvd.nist.gov/" rel="noopener noreferrer">NIST NVD</a></h2>
+            <p class="mb-0">CVSS scores and analysis status. Fetched the first time a CVE's page is viewed, then cached for 30 days once analyzed, or 24 hours otherwise.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p>CVSS scores from different versions (v4.0, v3.1, v3.0, v2) aren't directly comparable, so each score is shown with its version.</p>
+    <p class="mb-0">Logged-in users can keep a private watchlist with a note for each CVE.</p>
+  </div>
 {% endblock %}

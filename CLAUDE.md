@@ -105,6 +105,3 @@ Edit only `threatintel/templates/` and `threatintel/static/` for styling work. B
 - Messages contain the exact words "unavailable" (NVD outage) and "already" (duplicate watch).
 - Hostile text must still render escaped.
 
-## Styling run authorization (delete this block after the run)
-- The styling run is an explicit "just write it" for `threatintel/templates/` and `threatintel/static/` only. It adds no new function, so the TDD rule does not apply. Do not touch any `.py` file.
-- Run `pytest -q` after each change. It must stay green with the same count as before you started. If a test breaks, fix the template, not the test.

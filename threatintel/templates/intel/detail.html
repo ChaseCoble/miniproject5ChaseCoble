@@ -1,59 +1,84 @@
 {% extends "base.html" %}
+{% from "intel/_macros.html" import severity_badge, ransomware_badge %}
 {% block title %}{{ row['cve_id'] }}{% endblock %}
 {% block content %}
-  <h1 class="h3">{{ row['cve_id'] }}</h1>
-  <p class="lead">{{ row['name'] }}</p>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('intel.index') }}">Dashboard</a></li>
+      <li class="breadcrumb-item active cve-id" aria-current="page">{{ row['cve_id'] }}</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+    <div>
+      <h1 class="h3 cve-id mb-1">{{ row['cve_id'] }}</h1>
+      <p class="lead mb-1">{{ row['name'] }}</p>
+      <div class="d-flex gap-1">{{ ransomware_badge(row['ransomware_use']) }} {{ severity_badge(row['cvss_severity']) }}</div>
+    </div>
+    {% if g.user %}
+      <form method="post" action="{{ url_for('intel.watch_add', cve_id=row['cve_id']) }}">
+        <button type="submit" class="btn btn-primary">Add to watchlist</button>
+      </form>
+    {% endif %}
+  </div>
+
   {% if unavailable %}
     <div class="alert alert-warning" role="status">NVD enrichment is unavailable right now. Showing KEV data only.</div>
   {% endif %}
+
   <div class="row g-4">
-    <div class="col-md-7">
-      <h2 class="h5">CISA KEV</h2>
-      <dl class="row">
-        <dt class="col-sm-4">Vendor</dt><dd class="col-sm-8">{{ row['vendor'] }}</dd>
-        <dt class="col-sm-4">Product</dt><dd class="col-sm-8">{{ row['product'] }}</dd>
-        <dt class="col-sm-4">Description</dt><dd class="col-sm-8">{{ row['short_description'] }}</dd>
-        <dt class="col-sm-4">Date added</dt><dd class="col-sm-8">{{ row['date_added'] }}</dd>
-        <dt class="col-sm-4">Due date</dt><dd class="col-sm-8">{{ row['due_date'] }}</dd>
-        <dt class="col-sm-4">Ransomware use</dt><dd class="col-sm-8">{{ 'Known' if row['ransomware_use'] else 'Unknown' }}</dd>
-        <dt class="col-sm-4">CWEs</dt><dd class="col-sm-8">{{ row['cwes'] or 'None listed' }}</dd>
-      </dl>
-      <h3 class="h6">References</h3>
-      <ul>
-        {% for url in kev_urls %}
-          {# the parser already filters these; the template checks again #}
-          {% if url.startswith('http://') or url.startswith('https://') %}
-            <li><a href="{{ url }}" rel="noopener noreferrer">{{ url }}</a></li>
-          {% else %}
-            <li>{{ url }}</li>
-          {% endif %}
-        {% else %}
-          <li>None listed</li>
-        {% endfor %}
-      </ul>
+    <div class="col-lg-7">
+      <div class="card shadow-sm h-100">
+        <div class="card-header fw-semibold">CISA KEV</div>
+        <div class="card-body">
+          <p>{{ row['short_description'] }}</p>
+          <dl class="row mb-0">
+            <dt class="col-sm-4">Vendor</dt><dd class="col-sm-8">{{ row['vendor'] }}</dd>
+            <dt class="col-sm-4">Product</dt><dd class="col-sm-8">{{ row['product'] }}</dd>
+            <dt class="col-sm-4">Date added</dt><dd class="col-sm-8">{{ row['date_added'] }}</dd>
+            <dt class="col-sm-4">Due date</dt><dd class="col-sm-8">{{ row['due_date'] }}</dd>
+            <dt class="col-sm-4">Ransomware use</dt><dd class="col-sm-8">{{ 'Known' if row['ransomware_use'] else 'Unknown' }}</dd>
+            <dt class="col-sm-4">CWEs</dt><dd class="col-sm-8">{{ row['cwes'] or 'None listed' }}</dd>
+          </dl>
+        </div>
+        <div class="card-footer bg-body">
+          <h2 class="h6">References</h2>
+          <ul class="reference-list small mb-0">
+            {% for url in kev_urls %}
+              {# the parser already filters these; the template checks again #}
+              {% if url.startswith('http://') or url.startswith('https://') %}
+                <li><a href="{{ url }}" rel="noopener noreferrer">{{ url }}</a></li>
+              {% else %}
+                <li>{{ url }}</li>
+              {% endif %}
+            {% else %}
+              <li class="text-body-secondary">None listed</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
     </div>
-    <div class="col-md-5">
-      <h2 class="h5">NVD</h2>
-      <dl class="row">
-        <dt class="col-sm-5">CVSS</dt>
-        <dd class="col-sm-7">
+    <div class="col-lg-5">
+      <div class="card shadow-sm h-100">
+        <div class="card-header fw-semibold">NVD</div>
+        <div class="card-body">
           {% if row['cvss_score'] is not none %}
-            <strong>{{ row['cvss_score'] }} (CVSS {{ row['cvss_version'] }})</strong>
+            <div class="cvss-score">{{ row['cvss_score'] }} (CVSS v{{ row['cvss_version'] }})</div>
+            <div class="mb-3">{{ severity_badge(row['cvss_severity']) }}</div>
           {% else %}
-            Not scored
+            <div class="cvss-score text-body-secondary">Not scored</div>
+            <p class="small text-body-secondary">NVD has no usable CVSS score for this CVE{% if row['nvd_fetched_at'] is none %} yet{% endif %}.</p>
           {% endif %}
-        </dd>
-        <dt class="col-sm-5">Severity</dt><dd class="col-sm-7">{{ row['cvss_severity'] or '-' }}</dd>
-        <dt class="col-sm-5">Vector</dt><dd class="col-sm-7 text-break"><code>{{ row['cvss_vector'] or '-' }}</code></dd>
-        <dt class="col-sm-5">Score source</dt><dd class="col-sm-7">{{ row['cvss_source'] or '-' }} {{ row['cvss_type'] or '' }}</dd>
-        <dt class="col-sm-5">NVD status</dt><dd class="col-sm-7">{{ row['nvd_status'] or '-' }}</dd>
-      </dl>
-      <p><a href="https://nvd.nist.gov/vuln/detail/{{ row['cve_id'] }}" rel="noopener noreferrer">View on NVD</a></p>
-      {% if g.user %}
-        <form method="post" action="{{ url_for('intel.watch_add', cve_id=row['cve_id']) }}">
-          <button type="submit" class="btn btn-primary">Add to watchlist</button>
-        </form>
-      {% endif %}
+          <dl class="row mb-0">
+            <dt class="col-sm-5">Vector</dt><dd class="col-sm-7 text-break"><span class="cvss-vector small">{{ row['cvss_vector'] or '-' }}</span></dd>
+            <dt class="col-sm-5">Score source</dt><dd class="col-sm-7 text-break">{{ row['cvss_source'] or '-' }}{% if row['cvss_type'] %} ({{ row['cvss_type'] }}){% endif %}</dd>
+            <dt class="col-sm-5">NVD status</dt><dd class="col-sm-7">{{ row['nvd_status'] or '-' }}</dd>
+          </dl>
+        </div>
+        <div class="card-footer bg-body">
+          <a href="https://nvd.nist.gov/vuln/detail/{{ row['cve_id'] }}" rel="noopener noreferrer">View on NVD</a>
+        </div>
+      </div>
     </div>
   </div>
 {% endblock %}

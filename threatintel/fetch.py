@@ -10,7 +10,7 @@ from threatintel.sources import validate_cve_id
 
 KEV_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
 NVD_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId="
-USER_AGENT = "threatintel-inf601/0.3"
+USER_AGENT = "threatintel-inf601/0.4"
 TIMEOUT_SECONDS = 30
 # ~9x the real KEV feed (about 1.8 MB), so growth is fine but a runaway body is not
 MAX_RESPONSE_BYTES = 16 * 1024 * 1024

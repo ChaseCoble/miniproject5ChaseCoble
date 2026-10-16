@@ -1,14 +1,24 @@
 {% extends "base.html" %}
 {% block title %}Edit note{% endblock %}
 {% block content %}
-  <h1 class="h3 mb-3">Note for {{ cve_id }}</h1>
-  <form method="post" class="col-md-6">
-    <div class="mb-3">
-      <label for="note" class="form-label">Note</label>
-      <textarea name="note" id="note" class="form-control" rows="5" maxlength="500">{{ note }}</textarea>
-      <div class="form-text">Up to 500 characters. Leave empty to clear.</div>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('intel.watchlist') }}">Watchlist</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Edit note</li>
+    </ol>
+  </nav>
+  <div class="card shadow-sm col-lg-8">
+    <div class="card-body p-4">
+      <h1 class="h4 mb-3">Note for <span class="cve-id">{{ cve_id }}</span></h1>
+      <form method="post">
+        <div class="mb-3">
+          <label for="note" class="form-label">Note</label>
+          <textarea name="note" id="note" class="form-control" rows="6" maxlength="500">{{ note }}</textarea>
+          <div class="form-text">Up to 500 characters. Only you can see it. Leave it empty to clear it.</div>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a class="btn btn-link" href="{{ url_for('intel.watchlist') }}">Cancel</a>
+      </form>
     </div>
-    <button type="submit" class="btn btn-primary">Save</button>
-    <a class="btn btn-link" href="{{ url_for('intel.watchlist') }}">Cancel</a>
-  </form>
+  </div>
 {% endblock %}

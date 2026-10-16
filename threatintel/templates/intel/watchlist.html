@@ -1,45 +1,55 @@
 {% extends "base.html" %}
 {% block title %}Watchlist{% endblock %}
 {% block content %}
-  <h1 class="h3 mb-3">My Watchlist</h1>
+  <h1 class="h3 mb-3">My watchlist</h1>
   {% if rows %}
-    <div class="table-responsive">
-      <table class="table align-middle">
-        <thead><tr><th>CVE</th><th>Vendor</th><th>Product</th><th>Note</th><th></th></tr></thead>
-        <tbody>
-          {% for row in rows %}
-            <tr>
-              <td><a href="{{ url_for('intel.detail', cve_id=row['cve_id']) }}">{{ row['cve_id'] }}</a></td>
-              <td>{{ row['vendor'] }}</td>
-              <td>{{ row['product'] }}</td>
-              <td>{{ row['note'] }}</td>
-              <td class="text-end text-nowrap">
-                <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('intel.watch_edit', cve_id=row['cve_id']) }}">Edit note</a>
-                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#delete-{{ row['cve_id'] }}">Remove</button>
-                <div class="modal fade text-start" id="delete-{{ row['cve_id'] }}" tabindex="-1" aria-labelledby="delete-{{ row['cve_id'] }}-title" aria-hidden="true">
-                  <div class="modal-dialog">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h2 class="modal-title h5" id="delete-{{ row['cve_id'] }}-title">Remove {{ row['cve_id'] }}?</h2>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                      </div>
-                      <div class="modal-body">This removes it from your watchlist and deletes your note. The vulnerability itself stays in the dashboard.</div>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <form method="post" action="{{ url_for('intel.watch_delete', cve_id=row['cve_id']) }}">
-                          <button type="submit" class="btn btn-danger">Remove</button>
-                        </form>
+    <div class="card shadow-sm">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light"><tr><th>CVE</th><th>Vendor / Product</th><th>Note</th><th>Watched since</th><th></th></tr></thead>
+          <tbody>
+            {% for row in rows %}
+              <tr>
+                <td><a class="cve-id" href="{{ url_for('intel.detail', cve_id=row['cve_id']) }}">{{ row['cve_id'] }}</a></td>
+                <td>
+                  <div class="fw-semibold">{{ row['vendor'] }}</div>
+                  <div class="small text-body-secondary">{{ row['product'] }}</div>
+                </td>
+                <td class="note-cell">{% if row['note'] %}{{ row['note'] }}{% else %}<span class="text-body-secondary">No note</span>{% endif %}</td>
+                <td class="text-nowrap small text-body-secondary">{{ row['created'] }}</td>
+                <td class="text-end text-nowrap">
+                  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('intel.watch_edit', cve_id=row['cve_id']) }}">Edit note</a>
+                  <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#delete-{{ row['cve_id'] }}">Remove</button>
+                  <div class="modal fade text-start text-wrap" id="delete-{{ row['cve_id'] }}" tabindex="-1" aria-labelledby="delete-{{ row['cve_id'] }}-title" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h2 class="modal-title h5" id="delete-{{ row['cve_id'] }}-title">Remove {{ row['cve_id'] }}?</h2>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">This removes it from your watchlist and deletes your note. The vulnerability itself stays on the dashboard.</div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                          <form method="post" action="{{ url_for('intel.watch_delete', cve_id=row['cve_id']) }}">
+                            <button type="submit" class="btn btn-danger">Remove</button>
+                          </form>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   {% else %}
-    <p>You aren't watching anything yet. Open a CVE from the <a href="{{ url_for('intel.index') }}">dashboard</a> to add it.</p>
+    <div class="card shadow-sm">
+      <div class="card-body text-center py-5">
+        <p class="mb-1">You aren't watching anything yet.</p>
+        <p class="text-body-secondary mb-0">Open a CVE from the <a href="{{ url_for('intel.index') }}">dashboard</a> and choose <strong>Add to watchlist</strong>.</p>
+      </div>
+    </div>
   {% endif %}
 {% endblock %}
