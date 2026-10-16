@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import pytest
 import socket
+from datetime import datetime, timezone
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -92,3 +93,84 @@ def client(app):
 @pytest.fixture
 def auth(client):
     return AuthActions(client)
+
+class FakeClock:
+    def __init__(self):
+        self.now = datetime(2099, 6, 1, 12, 0, tzinfo=timezone.utc)
+
+    def __call__(self):
+        return self.now
+
+    def advance(self, delta):
+        self.now += delta
+
+
+class FakeFetchers:
+    """Stands in for fetch_kev / fetch_nvd. Records calls and can be told to fail."""
+
+    def __init__(self, kev_feed, nvd_doc_for):
+        self.kev_feed = kev_feed
+        self.nvd_doc_for = nvd_doc_for
+        self.kev_error = None
+        self.nvd_error = None
+        self.kev_calls = 0
+        self.nvd_calls = []
+
+    def kev(self):
+        self.kev_calls += 1
+        if self.kev_error is not None:
+            raise self.kev_error
+        return self.kev_feed
+
+    def nvd(self, cve_id):
+        self.nvd_calls.append(cve_id)
+        if self.nvd_error is not None:
+            raise self.nvd_error
+        return self.nvd_doc_for(cve_id)
+
+
+@pytest.fixture
+def clock():
+    return FakeClock()
+
+
+@pytest.fixture
+def fetchers(app, clock, kev_entry, load_fixture):
+    def nvd_doc_for(cve_id):
+        doc = load_fixture("nvd_undergoing_analysis.json")
+        doc["vulnerabilities"][0]["cve"]["id"] = cve_id
+        return doc
+
+    feed = {"vulnerabilities": [kev_entry(cveID=f"CVE-2099-{i:04d}") for i in (1, 2, 3)]}
+    fake = FakeFetchers(feed, nvd_doc_for)
+    app.config.update(KEV_FETCHER=fake.kev, NVD_FETCHER=fake.nvd, CLOCK=clock)
+    return fake
+
+
+@pytest.fixture
+def seed(app):
+    from threatintel.db import get_db, upsert_kev
+    from threatintel.sources import parse_kev
+
+    def _seed(entries):
+        with app.app_context():
+            upsert_kev(get_db(), parse_kev({"vulnerabilities": entries}))
+    return _seed
+
+
+def _logged_in_client(app, username):
+    client = app.test_client()
+    actions = AuthActions(client)
+    actions.register(username, "test-pass-123")
+    actions.login(username, "test-pass-123")
+    return client
+
+
+@pytest.fixture
+def alice(app):
+    return _logged_in_client(app, "alice")
+
+
+@pytest.fixture
+def bob(app):
+    return _logged_in_client(app, "bob")

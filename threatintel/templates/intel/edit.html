@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Edit note{% endblock %}
+{% block content %}
+  <h1 class="h3 mb-3">Note for {{ cve_id }}</h1>
+  <form method="post" class="col-md-6">
+    <div class="mb-3">
+      <label for="note" class="form-label">Note</label>
+      <textarea name="note" id="note" class="form-control" rows="5" maxlength="500">{{ note }}</textarea>
+      <div class="form-text">Up to 500 characters. Leave empty to clear.</div>
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a class="btn btn-link" href="{{ url_for('intel.watchlist') }}">Cancel</a>
+  </form>
+{% endblock %}

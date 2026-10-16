@@ -4,11 +4,39 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{% endblock %} - Threat Intel</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}">
 </head>
 <body>
-  <main>
-    {% if error %}<p role="alert">{{ error }}</p>{% endif %}
+  <nav class="navbar navbar-expand bg-body-tertiary mb-4">
+    <div class="container">
+      <a class="navbar-brand" href="{{ url_for('intel.index') }}">Threat Intel</a>
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('intel.index') }}">Dashboard</a></li>
+        {% if g.user %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('intel.watchlist') }}">Watchlist</a></li>
+        {% endif %}
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('intel.about') }}">About</a></li>
+      </ul>
+      <div class="d-flex align-items-center gap-2">
+        {% if g.user %}
+          <span class="navbar-text">{{ g.user['username'] }}</span>
+          <form method="post" action="{{ url_for('auth.logout') }}">
+            <button type="submit" class="btn btn-outline-secondary btn-sm">Log out</button>
+          </form>
+        {% else %}
+          <a class="btn btn-outline-primary btn-sm" href="{{ url_for('auth.login') }}">Log in</a>
+          <a class="btn btn-primary btn-sm" href="{{ url_for('auth.register') }}">Register</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+  <main class="container">
+    {% for message in get_flashed_messages() %}
+      <div class="alert alert-info" role="alert">{{ message }}</div>
+    {% endfor %}
+    {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
     {% block content %}{% endblock %}
   </main>
+  <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
 </body>
 </html>

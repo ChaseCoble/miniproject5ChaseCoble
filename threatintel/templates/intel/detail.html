@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ row['cve_id'] }}{% endblock %}
+{% block content %}
+  <h1 class="h3">{{ row['cve_id'] }}</h1>
+  <p class="lead">{{ row['name'] }}</p>
+  {% if unavailable %}
+    <div class="alert alert-warning" role="status">NVD enrichment is unavailable right now. Showing KEV data only.</div>
+  {% endif %}
+  <div class="row g-4">
+    <div class="col-md-7">
+      <h2 class="h5">CISA KEV</h2>
+      <dl class="row">
+        <dt class="col-sm-4">Vendor</dt><dd class="col-sm-8">{{ row['vendor'] }}</dd>
+        <dt class="col-sm-4">Product</dt><dd class="col-sm-8">{{ row['product'] }}</dd>
+        <dt class="col-sm-4">Description</dt><dd class="col-sm-8">{{ row['short_description'] }}</dd>
+        <dt class="col-sm-4">Date added</dt><dd class="col-sm-8">{{ row['date_added'] }}</dd>
+        <dt class="col-sm-4">Due date</dt><dd class="col-sm-8">{{ row['due_date'] }}</dd>
+        <dt class="col-sm-4">Ransomware use</dt><dd class="col-sm-8">{{ 'Known' if row['ransomware_use'] else 'Unknown' }}</dd>
+        <dt class="col-sm-4">CWEs</dt><dd class="col-sm-8">{{ row['cwes'] or 'None listed' }}</dd>
+      </dl>
+      <h3 class="h6">References</h3>
+      <ul>
+        {% for url in kev_urls %}
+          {# the parser already filters these; the template checks again #}
+          {% if url.startswith('http://') or url.startswith('https://') %}
+            <li><a href="{{ url }}" rel="noopener noreferrer">{{ url }}</a></li>
+          {% else %}
+            <li>{{ url }}</li>
+          {% endif %}
+        {% else %}
+          <li>None listed</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="col-md-5">
+      <h2 class="h5">NVD</h2>
+      <dl class="row">
+        <dt class="col-sm-5">CVSS</dt>
+        <dd class="col-sm-7">
+          {% if row['cvss_score'] is not none %}
+            <strong>{{ row['cvss_score'] }} (CVSS {{ row['cvss_version'] }})</strong>
+          {% else %}
+            Not scored
+          {% endif %}
+        </dd>
+        <dt class="col-sm-5">Severity</dt><dd class="col-sm-7">{{ row['cvss_severity'] or '-' }}</dd>
+        <dt class="col-sm-5">Vector</dt><dd class="col-sm-7 text-break"><code>{{ row['cvss_vector'] or '-' }}</code></dd>
+        <dt class="col-sm-5">Score source</dt><dd class="col-sm-7">{{ row['cvss_source'] or '-' }} {{ row['cvss_type'] or '' }}</dd>
+        <dt class="col-sm-5">NVD status</dt><dd class="col-sm-7">{{ row['nvd_status'] or '-' }}</dd>
+      </dl>
+      <p><a href="https://nvd.nist.gov/vuln/detail/{{ row['cve_id'] }}" rel="noopener noreferrer">View on NVD</a></p>
+      {% if g.user %}
+        <form method="post" action="{{ url_for('intel.watch_add', cve_id=row['cve_id']) }}">
+          <button type="submit" class="btn btn-primary">Add to watchlist</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

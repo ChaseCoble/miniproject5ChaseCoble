@@ -2,6 +2,7 @@
 # Chase Coble
 # Mini Project 5
 
+import functools
 import sqlite3
 
 from flask import Blueprint, g, redirect, render_template, request, session, url_for
@@ -23,6 +24,15 @@ def load_logged_in_user():
     g.user = None
     if user_id is not None:
         g.user = get_db().execute("SELECT * FROM user WHERE id = ?", (user_id,)).fetchone()
+
+
+def login_required(view):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        if g.user is None:
+            return redirect(url_for("auth.login"))
+        return view(**kwargs)
+    return wrapped_view
 
 
 @bp.route("/register", methods=("GET", "POST"))
@@ -69,11 +79,11 @@ def login():
             session["user_id"] = user["id"]
             # A fixed local path; any ?next= is ignored, so login can't be used
             # as an open redirect
-            return redirect("/")
+            return redirect(url_for("intel.index"))
     return render_template("auth/login.html", error=error)
 
 
 @bp.route("/logout", methods=("POST",))
 def logout():
     session.clear()
-    return redirect("/")
+    return redirect(url_for("intel.index"))

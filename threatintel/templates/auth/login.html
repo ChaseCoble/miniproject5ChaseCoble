@@ -1,12 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Log In{% endblock %}
 {% block content %}
-  <h1>Log In</h1>
-  <form method="post">
-    <label for="username">Username</label>
-    <input name="username" id="username" required>
-    <label for="password">Password</label>
-    <input type="password" name="password" id="password" required>
-    <button type="submit">Log In</button>
+  <h1 class="h3 mb-3">Log In</h1>
+  <form method="post" class="col-md-4">
+    <div class="mb-3">
+      <label for="username" class="form-label">Username</label>
+      <input name="username" id="username" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label">Password</label>
+      <input type="password" name="password" id="password" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Log In</button>
   </form>
 {% endblock %}

@@ -4,8 +4,11 @@
 
 import os
 import secrets
+from datetime import datetime, timezone
 
 from flask import Flask
+
+from threatintel.fetch import fetch_kev, fetch_nvd
 
 
 def create_app(test_config=None):
@@ -18,6 +21,10 @@ def create_app(test_config=None):
         DATABASE=os.path.join(app.instance_path, "threatintel.sqlite"),
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
+        # Views look these up at request time, so tests can swap in fakes
+        KEV_FETCHER=fetch_kev,
+        NVD_FETCHER=fetch_nvd,
+        CLOCK=lambda: datetime.now(timezone.utc),
     )
 
     if test_config is None:
@@ -33,5 +40,10 @@ def create_app(test_config=None):
 
     from . import auth
     app.register_blueprint(auth.bp)
+
+    from . import intel
+    app.register_blueprint(intel.bp)
+    # Refresh limiter state is per app, not a module global
+    app.extensions["threatintel_last_refresh"] = None
 
     return app

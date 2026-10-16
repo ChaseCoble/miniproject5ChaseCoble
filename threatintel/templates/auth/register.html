@@ -1,12 +1,17 @@
 {% extends "base.html" %}
 {% block title %}Register{% endblock %}
 {% block content %}
-  <h1>Register</h1>
-  <form method="post">
-    <label for="username">Username</label>
-    <input name="username" id="username" maxlength="64" required>
-    <label for="password">Password</label>
-    <input type="password" name="password" id="password" minlength="8" maxlength="128" required>
-    <button type="submit">Register</button>
+  <h1 class="h3 mb-3">Register</h1>
+  <form method="post" class="col-md-4">
+    <div class="mb-3">
+      <label for="username" class="form-label">Username</label>
+      <input name="username" id="username" class="form-control" maxlength="64" required>
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label">Password</label>
+      <input type="password" name="password" id="password" class="form-control" minlength="8" maxlength="128" required>
+      <div class="form-text">8 to 128 characters.</div>
+    </div>
+    <button type="submit" class="btn btn-primary">Register</button>
   </form>
 {% endblock %}
