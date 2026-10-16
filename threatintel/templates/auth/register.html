@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+  <h1>Register</h1>
+  <form method="post">
+    <label for="username">Username</label>
+    <input name="username" id="username" maxlength="64" required>
+    <label for="password">Password</label>
+    <input type="password" name="password" id="password" minlength="8" maxlength="128" required>
+    <button type="submit">Register</button>
+  </form>
+{% endblock %}

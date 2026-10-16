@@ -92,7 +92,7 @@ identity model and standing rules, not anything specific to this project.
 - Report any guess the tests don’t pin down. 
 - threatintel/fetch.py: stdlib only (urllib, json, http.client), no Flask. Network access only through the injected urlopen parameter, which defaults to urllib.request.urlopen. Never read a response without a bound.
 - The “no Flask” rule applies to sources.py and fetch.py only. db.py and __init__.py use Flask.
-- create_app(test_config=None) follows the Flask tutorial factory: it creates the instance folder, registers the init-db CLI command and the DB teardown, and has no blueprints yet.
+- create_app(test_config=None) follows the Flask tutorial factory: it creates the instance folder, registers the init-db CLI command and the DB teardown, and registers the auth blueprint (threatintel/auth.py, url_prefix /auth: register, login, POST-only logout, and g.user loading). No other blueprints yet.
 get_db sets row_factory = sqlite3.Row and PRAGMA foreign_keys = ON per connection.
 - Database writers wrap their statements in with db: so a failure rolls back and leaves no partial writes. All SQL values are bound as parameters; never build SQL with string formatting.
 ### Open questions / things intentionally deferred

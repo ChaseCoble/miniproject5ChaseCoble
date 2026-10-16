@@ -3,6 +3,7 @@
 # Mini Project 5
 
 import os
+import secrets
 
 from flask import Flask
 
@@ -10,8 +11,13 @@ from flask import Flask
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
-        SECRET_KEY="dev",
+        # A random per-process key unless one is supplied, so the tutorial's
+        # guessable "dev" key is never used; sessions don't survive a restart
+        # without THREATINTEL_SECRET_KEY or instance/config.py
+        SECRET_KEY=os.environ.get("THREATINTEL_SECRET_KEY") or secrets.token_hex(32),
         DATABASE=os.path.join(app.instance_path, "threatintel.sqlite"),
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
     )
 
     if test_config is None:
@@ -24,5 +30,8 @@ def create_app(test_config=None):
 
     from . import db
     db.init_app(app)
+
+    from . import auth
+    app.register_blueprint(auth.bp)
 
     return app

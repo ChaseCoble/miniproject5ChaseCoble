@@ -23,6 +23,8 @@ design review and I accepted it.
 | Any logged-in user can refresh, at most once per hour | Keeps the server from being used to hammer CISA | Proposed, accepted |
 | CSRF protection is out of scope: a documented known limitation | Time-boxed. README lists the exposed state-changing routes and notes SameSite=Lax as a partial mitigation only. | Mine |
 | Third-party text is never rendered as HTML (no `\|safe`); only http/https URLs become links | NVD and KEV text is untrusted input | Proposed, accepted |
+| Login timing difference is a known limitation: no dummy-hash check | An unknown username skips the password-hash check, so it responds faster than a wrong password and can reveal which usernames exist. The message is identical for both. Accepted rather than adding a dummy-hash comparison. | Mine |
+| `login_required` is not added until the next slice's tests drive it | Tests come first; no decorator without a test that calls it | Mine |
 
 ## CVSS and caching
 
@@ -43,6 +45,13 @@ design review and I accepted it.
 | Feed-supplied values are logged with `%r` | A hostile value cannot forge log lines | Proposed, accepted |
 | NVD: unknown CVE returns `None`; unusable response or malformed record raises `ValueError`; a CVE with no usable metrics returns all-`None` CVSS fields | NVD is one record per call, so a response we can't interpret should show "enrichment unavailable" instead of being cached | Proposed, accepted [PENDING: confirm you accept all five NVD decisions] |
 | `vulnStatus` absent gives `None`; `vulnStatus` of the wrong type raises | "NVD didn't say" differs from "NVD sent something uninterpretable" | Proposed, accepted |
+
+## Database writes
+
+| Decision | Why | Status |
+|---|---|---|
+| Database writers (`upsert_kev`, `save_nvd`) wrap their statements in `with db:`; all SQL values are bound as parameters | A failure rolls back instead of leaving a partial write for a later commit to save. Pinned by `test_upsert_kev_failure_midway_leaves_no_partial_rows`. | Mine |
+| Exception: `init_db` is not wrapped in `with db:` | It uses `executescript`, which commits any open transaction first and then runs each statement on its own, so `with db:` would not make it atomic. Left as in the Flask tutorial. It drops and recreates every table, destroying all data; the README says so. | Proposed, accepted |
 
 ## Notes URL extraction (beyond the rubric, kept deliberately)
 
@@ -70,6 +79,7 @@ survivors are all of this kind.
 ## Process
 
 - **Git is human-only.** Claude does not run git commands, make commits, or propose git config changes. Claude reports when work is ready to commit; I commit. **Mine.**
+- **Bootstrap is vendored by me** into `threatintel/static/vendor/bootstrap`. Claude does not add, link or pick a version of Bootstrap. **Mine.**
 - **Tests are the contract.** Tests were drafted in design review (me and Claude, a batch at a time); Claude Code implements and may not edit `tests/` or `pytest.ini`. Enforced with `git diff --exit-code tests/ pytest.ini` after each run, which detects tampering after the fact.
 - **Fixtures:** real responses are `nvd_log4shell.json`, `nvd_undergoing_analysis.json` and the `kev_sample.json` entries. Synthetic, derived by editing real ones: `nvd_no_metrics`, `nvd_v2_only`, `nvd_v30_only`, `nvd_empty`.
 - **v3.0 caveat:** NVD re-scored the old CVEs I checked with v3.1, so the v3.0 branch is exercised only by a synthetic fixture. I did not verify v3.0's internal `cvssData` fields.
