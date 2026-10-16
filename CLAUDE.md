@@ -25,6 +25,8 @@ identity model and standing rules, not anything specific to this project.
   current project directory and its own subdirectories — nothing above
   or outside it, even if a task seems to call for it.
 
+- This project is venv. Run source .venv/bin/activate before running pytest -q
+
 ## Workflow Rules
 
 - **TDD discipline**: for any new function/method, a failing test should
@@ -79,5 +81,14 @@ identity model and standing rules, not anything specific to this project.
 
 ### Specifics
 - We are going to do a simple threat intel feed aggregator
-- 
+- Never edit tests/ or pytest.ini. If a test looks wrong, stop and say so.
+- sources.py is stdlib-only, pure functions, no Flask import, no network, no file I/O.
+- Header comment on every .py file (the rubric item).
+- - # INF601 - Advanced Programming in Python
+- - # Chase Coble
+- - # Mini Project 5
+- Implement only what tests require. No uncalled helpers.
+- Run pytest -q, stop at green.
+- Report any guess the tests don’t pin down. 
+
 ### Open questions / things intentionally deferred
