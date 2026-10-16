@@ -32,6 +32,7 @@ design review and I accepted it.
 | Scores from different CVSS versions are sorted together, with the version always shown next to the score | Real data shows the same CVE scoring 9.3 (v4.0) and 10.0 (v3.1), so the version must be visible | Mine |
 | Cache TTL: 30 days for `Analyzed` and `Rejected`, 24 hours for anything else | Log4Shell's `lastModified` is 2026-08-11, so analyzed records still change. NVD's schema types `vulnStatus` as a free string, so unknown values fall into the short TTL. | Proposed, corrected from my first draft |
 | Timestamps are stored as the raw strings NVD sends | NVD uses a naive format and SSVC uses an offset format. No guessing about time zones. | Proposed, accepted |
+| A non-string v2 `baseSeverity` (read from the metric itself, not `cvssData`) becomes `None`, the same as the other descriptive CVSS fields | Consistent with the tested rule for v3+/v4 severity, vector, source and type. No test pins the v2 case. | Claude Code choice, accepted |
 
 ## Parsing policy
 

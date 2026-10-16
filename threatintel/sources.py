@@ -22,6 +22,19 @@ NOTES_SPLIT_RE = re.compile(r"[;\s]+|,(?=https?://)")
 # Scheme plus at least one character, so a bare "https://" is rejected
 URL_RE = re.compile(r"https?://.")
 
+# NVD metric keys in precedence order; the version label comes from the
+# key, not from cvssData["version"]
+CVSS_METRIC_KEYS = (
+    ("cvssMetricV40", "4.0"),
+    ("cvssMetricV31", "3.1"),
+    ("cvssMetricV30", "3.0"),
+    ("cvssMetricV2", "2.0"),
+)
+CVSS_KEYS = (
+    "cvss_score", "cvss_version", "cvss_severity",
+    "cvss_vector", "cvss_source", "cvss_type",
+)
+
 
 def validate_cve_id(cve_id):
     # fullmatch (not match + $) so a trailing "\n" is rejected;
@@ -84,3 +97,79 @@ def parse_kev(data):
             "urls": parse_notes_urls(entry["notes"]),
         })
     return rows
+
+
+def select_cvss(metrics):
+    # Newest CVSS version with a usable entry wins; within it, the first
+    # Primary entry, else the first usable entry
+    if not isinstance(metrics, dict):
+        return dict.fromkeys(CVSS_KEYS)
+    for key, version in CVSS_METRIC_KEYS:
+        entries = metrics.get(key)
+        if not isinstance(entries, list):
+            continue
+        usable = [
+            entry for entry in entries
+            if isinstance(entry, dict)
+            and isinstance(entry.get("cvssData"), dict)
+            and is_cvss_score(entry["cvssData"].get("baseScore"))
+        ]
+        if not usable:
+            continue
+        primary = [entry for entry in usable if entry.get("type") == "Primary"]
+        chosen = (primary or usable)[0]
+        data = chosen["cvssData"]
+        # v2 keeps baseSeverity on the metric itself, not inside cvssData
+        severity = chosen.get("baseSeverity") if version == "2.0" else data.get("baseSeverity")
+        return {
+            "cvss_score": data["baseScore"],
+            "cvss_version": version,
+            "cvss_severity": str_or_none(severity),
+            "cvss_vector": str_or_none(data.get("vectorString")),
+            "cvss_source": str_or_none(chosen.get("source")),
+            "cvss_type": str_or_none(chosen.get("type")),
+        }
+    return dict.fromkeys(CVSS_KEYS)
+
+
+def is_cvss_score(score):
+    # bool is a subclass of int, so it has to be excluded explicitly
+    return (
+        isinstance(score, (int, float))
+        and not isinstance(score, bool)
+        and 0.0 <= score <= 10.0
+    )
+
+
+def str_or_none(value):
+    # Descriptive CVSS fields are optional: a non-string becomes None
+    # rather than disqualifying an entry that has a usable score
+    return value if isinstance(value, str) else None
+
+
+def parse_nvd(data):
+    # Returns None for an unknown CVE; raises ValueError for anything that
+    # can't be interpreted, so it isn't cached as a real answer
+    if not isinstance(data, dict) or not isinstance(data.get("vulnerabilities"), list):
+        raise ValueError("not an NVD response: missing 'vulnerabilities' list")
+    if not data["vulnerabilities"]:
+        return None
+    record = data["vulnerabilities"][0]
+    if not isinstance(record, dict) or not isinstance(record.get("cve"), dict):
+        raise ValueError("malformed NVD record: missing 'cve' object")
+    cve = record["cve"]
+    if not validate_cve_id(cve.get("id")):
+        raise ValueError(f"malformed NVD record: invalid CVE ID {cve.get('id')!r}")
+    for key in ("published", "lastModified"):
+        if not isinstance(cve.get(key), str):
+            raise ValueError(f"malformed NVD record {cve['id']}: {key} is not a string")
+    # vulnStatus is optional in NVD's schema; present-but-wrong-type is an error
+    if "vulnStatus" in cve and not isinstance(cve["vulnStatus"], str):
+        raise ValueError(f"malformed NVD record {cve['id']}: vulnStatus is not a string")
+    return {
+        "cve_id": cve["id"],
+        "nvd_status": cve.get("vulnStatus"),
+        "nvd_published": cve["published"],
+        "nvd_last_modified": cve["lastModified"],
+        **select_cvss(cve.get("metrics")),
+    }

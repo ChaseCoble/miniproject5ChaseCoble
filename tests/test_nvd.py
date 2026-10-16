@@ -282,3 +282,31 @@ def test_parse_nvd_raises_on_non_string_field(load_fixture, key, bad_value):
     cve_of(doc)[key] = bad_value
     with pytest.raises(ValueError):
         parse_nvd(doc)
+
+@pytest.mark.parametrize("field, key", [
+    ("baseSeverity", "cvss_severity"),
+    ("vectorString", "cvss_vector"),
+])
+@pytest.mark.parametrize("bad", [None, 42, ["x"], {"a": 1}])
+def test_select_cvss_non_string_cvssdata_field_becomes_none(field, key, bad):
+    m = metric(7.5)
+    m["cvssData"][field] = bad
+    got = select_cvss({"cvssMetricV31": [m]})
+    assert got["cvss_score"] == 7.5 and got[key] is None
+
+
+@pytest.mark.parametrize("field, key", [("source", "cvss_source"), ("type", "cvss_type")])
+@pytest.mark.parametrize("bad", [None, 42, ["x"]])
+def test_select_cvss_non_string_metric_field_becomes_none(field, key, bad):
+    m = metric(7.5)
+    m[field] = bad
+    got = select_cvss({"cvssMetricV31": [m]})
+    assert got["cvss_score"] == 7.5 and got[key] is None
+
+@pytest.mark.parametrize("bad", [None, 42, ["x"], {"a": 1}])
+def test_select_cvss_v2_non_string_severity_becomes_none(bad):
+    # v2 keeps severity on the metric itself, a different code path from the other versions
+    m = metric_v2(10.0)
+    m["baseSeverity"] = bad
+    got = select_cvss({"cvssMetricV2": [m]})
+    assert got["cvss_score"] == 10.0 and got["cvss_severity"] is None
